@@ -9,13 +9,6 @@
 #define MAX_PATH 100
 #define PERMUTATIONS 362880
 
-/************************************************************************************************
- Node,Node operations sections of code. Node stores board state along with pertinent information.
-*************************************************************************************************/
-//5.5 recent changes, added findPermPos,
-// made gState and sState const
-// added sorted
-
 const char blankChar = '.';
 int factorialResults[NUM_TILES-1]; // will store factorials for use in the tallyLessThan helper function for findPermPos
 enum swapDir{up, down, left, right};// direction is direction of movement of the blank tile during the swap-eration
@@ -25,7 +18,7 @@ char gState[MAX_D][MAX_D]={
                             {'4',       '5',       '3'},
                             {'7',       '8', blankChar}
                           };
-/*
+
 char sState[MAX_D][MAX_D]={
                             {blankChar, '8',       '3'},
                             {'4',       '6',       '2'},
@@ -39,14 +32,6 @@ char sState[MAX_D][MAX_D]={
                             {'3'      ,'2', '1'}
                            };
 /*
-**************************************
-      Column0    Column1    Column2
-Row0  x[0][0]    x[0][1]    x[0][2]
-Row1  x[1][0]    x[1][1]    x[1][2]
-Row2  x[2][0]    x[2][1]    x[2][2]
-**************************************  
-*/
-
 struct Node
 {
     char board[MAX_D][MAX_D];
@@ -67,13 +52,12 @@ void printState(struct Node *node)
 
 void swapTile(struct Node *node, enum swapDir direction)
 {
-    //direction is direction of movement of blank tile
+    //direction specifically refers to the direction of movement of the blank tile
     char temp;
     short bX = node->bX;
     short bY = node->bY;
     switch(direction)
     {
-        
         case up:    temp = node->board[bY-1][bX];
                     node->board[bY-1][bX] = node->board[bY][bX];
                     node->board[bY][bX] = temp;
@@ -169,6 +153,7 @@ int isEmpty(struct Queue *queue)
 
 struct Node* dequeue(struct Queue *queue)
 {
+    // Does not check initially to see if queue is empty, assumed valid use case
     struct Node *node;
     if (queue->head != NULL)
     {
@@ -209,8 +194,7 @@ void successorHelper(struct Queue *fringe, struct Node *node, enum swapDir direc
     enqueue(fringe, newNode);
 }
 
-void addSuccessorsToFringe(struct Queue *fringe, struct Node *node) // this was the culprit
-{
+void addSuccessorsToFringe(struct Queue *fringe, struct Node *node) 
     int bY = node->bY;
     int bX = node->bX;
     if (bY >= 0 && bY < MAX_D-1)
@@ -234,7 +218,7 @@ void addSuccessorsToFringe(struct Queue *fringe, struct Node *node) // this was 
     }
 }
 
-/*******************************************************************ILES********************
+/***************************************************************************************
  Contains a 3-d array consisting of 1-100 board states
  **************************************************************************************/
 struct Path
@@ -342,10 +326,10 @@ int tallyLessThan(char state[MAX_D][MAX_D], int startX, int startY, int numTiles
     {
         //x = i % MAX_D;
         //y = i / MAX_D; // was floor
-        // code block below manually finds the x, y vals, does same thing as block above ^ but way faster.
-        // This function (tallyLessThan) gets called ~6M times in worst case, anc account(ed) for roughly 70%
-        // of the total time for BFS. % and / are expensive, so changing to addition/substraction in block below
-        // instead changed the % time of the program for tallyLessThan to only ~8.7%.
+        // code block below manually finds the x, y vals, does same thing as block above ^ but roughly 29% faster.
+        // This function (tallyLessThan) gets called ~6M times in worst case, and account(ed) for roughly 70%
+        // of the total time for BFS. % and / are expensive, so changing to addition in block below
+        // reduced the % of BFS that tallyLessThan accounts for to only ~8.7%.
         if (x == MAX_D)
         {
             x = 0;
@@ -369,6 +353,7 @@ int tallyLessThan(char state[MAX_D][MAX_D], int startX, int startY, int numTiles
 
 // Effectively finds what position the state would be in if all 9! permutations were sorted in a container.
 // Note: ALL 9! permutations, NOT the 9!/2 **possible** permutations (states) from a given starting position.
+// 
 int findPermPos(char state[MAX_D][MAX_D]) 
 {
 // with thanks to Gareth Rees here: https://stackoverflow.com/questions/12146910/finding-the-lexicographic-index-of-a-permutation-of-a-given-array
