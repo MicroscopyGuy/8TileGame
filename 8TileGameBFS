@@ -9,43 +9,6 @@
 #define MAX_PATH 100
 #define PERMUTATIONS 362880
 
-/* Update Log:
-  v1.0: code to implement path added 
-  v2.0: first working path printed
-  v3.0: reports the time it takes to search through the state space
-  v4.0: utilizes struct Explored with 3d array to retain board states
-        instead of the struct LinkedList. For no solution, went from 308->207 seconds.
-  v5.0: deleted code for previous Explored data structure
-        makeInitialState() now mallocs a new node and returns it, doesn't take one as param
-        removed testSwap() and a couple other debug functions 
-        fringe no longer malloc'd, has constructor, removed size field which did nothing
-        Made the blank character a global variable
-  v5.2 Fixed array sizes, should be 3-3 not 4-4 (sped up by 10%: from 207-188 seconds)
-       Introduced hashing, but needs new algorithm. Not mathematically viable. Collisions.
-  v5.3 Introduced buckets for storage in the explored container, implemented as partitioned 3d array
-       Does not properly evaluate new states, in 5.4 going to introduced an int array that stores
-       the number of elements stored in that appropriate partition. Much simpler.
-  v5.4 Buckets fully implemented:
-           1) benchmark solution test (116,338 states) 58 seconds-> 10.2 seconds
-           2) benchmark no solution test (181,440 states) 188 seconds -> 32.5 seconds
-  v5.5-v6.0: need to address leaking memory first,
-             then going to try and make the hash function in appendBucket a standalone,
-             recursive function that takes partitionSize 
-  v6.01: nodes placed in unique position based on board permutation
-  
-  v7.0: garbage collection 100%
-        preprocessor implemented to pass MAX_D to arrays, define other constants. About 15% speed improvement.
-  v8.0: implemented factorial iteratively, removed superfluous floor() function in tallyLessThan, avg (181440) .32 -> .28 ish
-        reordered check in tallyLessThan from blankChar || < than, to < than || blankChar, since < than more likely,
-        from 290ms ish to about 270ms average
-  v9.0: separated breadth first seearch portion of code into own function, main function now much clearer
-        removed timings for portions such as path, garbage collection. They are pretty small. 
-        pre-computed results for factorials from 0 - NUM_TILES-1, stored in factorialResults,
-        from 270ms to 258ms avg for worst case runtime, maybe not worth it in long run?
-        bX and bY on struct Node changed from ints -> shorts
-        changed tallyLessThan (how x, y indices are computed) sped up by 28%, from 260ms to 185ms avg
-
-*/
 /************************************************************************************************
  Node,Node operations sections of code. Node stores board state along with pertinent information.
 *************************************************************************************************/
@@ -54,11 +17,9 @@
 // added sorted
 
 const char blankChar = '.';
-
 int factorialResults[NUM_TILES-1]; // will store factorials for use in the tallyLessThan helper function for findPermPos
-
-
 enum swapDir{up, down, left, right};// direction is direction of movement of the blank tile during the swap-eration
+
 char gState[MAX_D][MAX_D]={
                             {'1',       '2',       '6'}, // swapped 3 and 6
                             {'4',       '5',       '3'},
@@ -70,8 +31,8 @@ char sState[MAX_D][MAX_D]={
                             {'4',       '6',       '2'},
                             {'7',       '5',       '1'}
                           };
-*/
-
+*/ An alternative start state, a mirror-image of the goal state. 
+   Provides a test for code that requires near-entire enumeration of state space.
 char sState[MAX_D][MAX_D]={
                             {blankChar,'8', '7'},
                             {'6'      ,'5', '4'},
