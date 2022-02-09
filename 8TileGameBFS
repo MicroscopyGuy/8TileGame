@@ -9,6 +9,42 @@
 #define MAX_PATH 100
 #define PERMUTATIONS 362880
 
+/* Update Log:
+  v1.0: code to implement path added 
+  v2.0: first working path printed
+  v3.0: reports the time it takes to search through the state space
+  v4.0: utilizes struct Explored with 3d array to retain board states
+        instead of the struct LinkedList. For no solution, went from 308->207 seconds.
+  v5.0: deleted code for previous Explored data structure
+        makeInitialState() now mallocs a new node and returns it, doesn't take one as param
+        removed testSwap() and a couple other debug functions 
+        fringe no longer malloc'd, has constructor, removed size field which did nothing
+        Made the blank character a global variable
+  v5.2 Fixed array sizes, should be 3-3 not 4-4 (sped up by 10%: from 207-188 seconds)
+       Introduced hashing, but needs new algorithm. Not mathematically viable. Collisions.
+  v5.3 Introduced buckets for storage in the explored container, implemented as partitioned 3d array
+       Does not properly evaluate new states, in 5.4 going to introduced an int array that stores
+       the number of elements stored in that appropriate partition. Much simpler.
+  v5.4 Buckets fully implemented:
+           1) benchmark solution test (116,338 states) 58 seconds-> 10.2 seconds
+           2) benchmark no solution test (181,440 states) 188 seconds -> 32.5 seconds
+  v5.5-v6.0: need to address leaking memory first,
+             then going to try and make the hash function in appendBucket a standalone,
+             recursive function that takes partitionSize 
+  v6.01: nodes placed in unique position based on board permutation
+  
+  v7.0: garbage collection 100%
+        preprocessor implemented to pass MAX_D to arrays, define other constants. About 15% speed improvement.
+  v8.0: implemented factorial iteratively, removed superfluous floor() function in tallyLessThan, avg (181440) .32 -> .28 ish
+        reordered check in tallyLessThan from blankChar || < than, to < than || blankChar, since < than more likely,
+        from 290ms ish to about 270ms average
+  v9.0: separated breadth first seearch portion of code into own function, main function now much clearer
+        removed timings for portions such as path, garbage collection. They are pretty small. 
+        pre-computed results for factorials from 0 - NUM_TILES-1, stored in factorialResults,
+        from 270ms to 258ms avg for worst case runtime, maybe not worth it in long run?
+        bX and bY on struct Node changed from ints -> shorts
+        changed tallyLessThan (how x, y indices are computed) sped up by 28%, from 260ms to 185ms avg
+
 */
 /************************************************************************************************
  Node,Node operations sections of code. Node stores board state along with pertinent information.
@@ -19,10 +55,13 @@
 
 const char blankChar = '.';
 
+int factorialResults[NUM_TILES-1]; // will store factorials for use in the tallyLessThan helper function for findPermPos
+
+
 enum swapDir{up, down, left, right};// direction is direction of movement of the blank tile during the swap-eration
 char gState[MAX_D][MAX_D]={
-                            {'1',       '2',       '3'}, // swapped 3 and 6
-                            {'4',       '5',       '6'},
+                            {'1',       '2',       '6'}, // swapped 3 and 6
+                            {'4',       '5',       '3'},
                             {'7',       '8', blankChar}
                           };
 /*
@@ -46,13 +85,14 @@ Row1  x[1][0]    x[1][1]    x[1][2]
 Row2  x[2][0]    x[2][1]    x[2][2]
 **************************************  
 */
+
 struct Node
 {
     char board[MAX_D][MAX_D];
     struct Node *next; //used for the fringe (queue), linked list based
     struct Node *prev; //refers to a node's singular parent
-    int bX;
-    int bY;    
+    short bX;
+    short bY;    
 };
 
 void printState(struct Node *node) 
@@ -68,8 +108,8 @@ void swapTile(struct Node *node, enum swapDir direction)
 {
     //direction is direction of movement of blank tile
     char temp;
-    int bX = node->bX;
-    int bY = node->bY;
+    short bX = node->bX;
+    short bY = node->bY;
     switch(direction)
     {
         
@@ -233,7 +273,7 @@ void addSuccessorsToFringe(struct Queue *fringe, struct Node *node) // this was 
     }
 }
 
-/***************************************************************************************
+/*******************************************************************ILES********************
  Contains a 3-d array consisting of 1-100 board states
  **************************************************************************************/
 struct Path
@@ -257,7 +297,7 @@ void appendBoardToPath(struct Path *path, struct Node *node) //must change size
         for (k = 0; k < MAX_D; k++)
         {
             path->boardStates[path->size][j][k] = node->board[j][k];
-            path->size++; 
+            path->size++;
         }
     }
 }
@@ -328,23 +368,37 @@ int factorial(int num)
     }
 }
 
-int tallyLessThan(char state[MAX_D][MAX_D], int startPos, int numTiles) // helper function for findPermPos
+int tallyLessThan(char state[MAX_D][MAX_D], int startX, int startY, int numTiles) // helper function for findPermPos
 {
 
     int tally = 0;
-    int initX = startPos % MAX_D;
-    int initY = startPos / MAX_D; // was floor
+    //int initX = startPos % MAX_D;
+    //int initY = startPos / MAX_D; // was floor
     int i, x, y;
-    char checkVal = state[initY][initX];
+    char checkVal = state[startY][startX];
 
-    for (i = startPos + 1; i < numTiles; i++)
+    for (x = startX + 1, y = startY; y < MAX_D; x++)
     {
-        x = i % MAX_D;
-        y = i / MAX_D; // was floor
+        //x = i % MAX_D;
+        //y = i / MAX_D; // was floor
+        // code block below manually finds the x, y vals, does same thing as block above ^ but way faster.
+        // This function (tallyLessThan) gets called ~6M times in worst case, anc account(ed) for roughly 70%
+        // of the total time for BFS. % and / are expensive, so changing to addition/substraction in block below
+        // instead changed the % time of the program for tallyLessThan to only ~8.7%.
+        if (x == MAX_D)
+        {
+            x = 0;
+            y++;
+            if (y == MAX_D)
+            {
+                return tally;
+            }
+        }
 
         // separate check for blankChar, since arbitrarily defined, might be lexicographically greater than checkVal,
         // but needs to be treated as though it were '0'
-        if (state[y][x] == blankChar || state[y][x] < checkVal)
+        // more likely to be < checkVal than == to blankChar, since only one blankChar, potentially several < checkVal
+        if (state[y][x] < checkVal || state[y][x] == blankChar)
         {
             tally++;
         } 
@@ -353,22 +407,42 @@ int tallyLessThan(char state[MAX_D][MAX_D], int startPos, int numTiles) // helpe
 }
 
 // Effectively finds what position the state would be in if all 9! permutations were sorted in a container.
-// Note: all 9! permutations, NOT the 9!/2 possible states from a given starting position.
+// Note: ALL 9! permutations, NOT the 9!/2 **possible** permutations (states) from a given starting position.
 int findPermPos(char state[MAX_D][MAX_D]) 
 {
 // with thanks to Gareth Rees here: https://stackoverflow.com/questions/12146910/finding-the-lexicographic-index-of-a-permutation-of-a-given-array
 // post clarified an issue I had with a previous recursive implementation
-    int pos = 0;
     int index = 0;
-    
-    while (pos < NUM_TILES)
+    int x, y, position;
+ 
+    for (position = 0, x = 0, y = 0; y < MAX_D; position++, x++)
     {
-        index += factorial(NUM_TILES-1-pos) * tallyLessThan(state, pos, NUM_TILES);
-        pos++;
+        if (x == MAX_D)
+        {
+            x = 0;
+            y++;
+            if (y == MAX_D)
+            {
+                return index;
+            }
+        }
+        // essentially index += factorial(NUM_TILES-1-pos) * tallyLessThan(state, pos, NUM_TILES);,
+        // factorial results now stored for 0-8 in array (factorialResults) to eliminate duplicate computation
+        index += factorialResults[NUM_TILES-1-position] * tallyLessThan(state, x, y, NUM_TILES);
+
     }
+    
     return index;
 }
 
+void populateFactorialResults(int factorialResults[NUM_TILES-1])
+{
+    short i;
+    for (i = 0; i< NUM_TILES; i++)
+    {
+        factorialResults[i] = factorial(i);
+    }
+}
 void garbageCollection(struct Explored *explored, int exploredSize, struct Queue *queue)
 {
     int i;
@@ -396,19 +470,14 @@ void garbageCollection(struct Explored *explored, int exploredSize, struct Queue
     free(explored->uniqueNodes);
 }
 
-
-int main(int argc, char* argv[])
-{   
-    clock_t tAfterSearch, tBeforeSearch, tPathBegin, tPathEnd, tBeforeGarbCollect, tAfterGarbCollect;
-    //clock_t begin, end;
+int breadthFirstSearch()
+{
     int numUniqueStates = 0;
     int numTotalStates = 0;
     int solutionFound = 0;
     int nodeStatePos = 0;
-    double timeSearch, timePath, timeGarbageCollect;
 
-    tBeforeSearch = clock();
-
+    populateFactorialResults(factorialResults);
     int gStatePos = findPermPos(gState);
 
     struct Explored explored = newExplored(PERMUTATIONS);
@@ -432,16 +501,13 @@ int main(int argc, char* argv[])
 
             if (nodeStatePos == gStatePos) // inner check
             {
-                solutionFound = 1;
-                tAfterSearch = clock(); 
-                tPathBegin = clock();
-                printf("Solution found!\n");
-
                 struct Path path = newPath();
-                makePath(&path, node); printPath(&path);
-                tPathEnd = clock();
-                
-                break;
+                makePath(&path, node); 
+                printPath(&path);
+                printf("Number of unique states searched: %d\n", numUniqueStates);
+                printf("Number of total states searched: %d\n", numTotalStates);
+                garbageCollection(&explored, PERMUTATIONS, &fringe); 
+                return 1;
             }
             addSuccessorsToFringe(&fringe, node);
             appendBoard(&explored, node, findPermPos(node->board));
@@ -452,30 +518,44 @@ int main(int argc, char* argv[])
             free(node);
         }
     }
-    tAfterSearch = clock();
-    timeSearch = ((double) (tAfterSearch-tBeforeSearch)/ CLOCKS_PER_SEC);
-    printf("tPathEnd: %f tPathBegin: %f\n", ((double) (tPathEnd/CLOCKS_PER_SEC)), ((double) (tPathBegin/CLOCKS_PER_SEC)) );
-    timePath = ((double) (tPathEnd - tPathBegin)/ CLOCKS_PER_SEC);
+    //printf("Number of unique states searched: %d\n", numUniqueStates);
+    //printf("Number of total states searched: %d\n", numTotalStates);
 
-    if(!solutionFound) printf("No solution found.\n");
-    printf("Number of unique states searched: %d\n", numUniqueStates);
-    printf("Number of total states searched: %d\n", numTotalStates);
-    printf("The search for the solution took %f seconds.\n", timeSearch);
-    printf("Putting together and showing the path took %f seconds.\n", timePath);
-    
-    tBeforeGarbCollect = clock();   
     garbageCollection(&explored, PERMUTATIONS, &fringe);
-    tAfterGarbCollect = clock();
-
-    timeGarbageCollect = ((double) (tAfterGarbCollect - tBeforeGarbCollect) / CLOCKS_PER_SEC);
-    printf("Garbage collection took %f seconds.\n",timeGarbageCollect);
-    //printf("Total time: %f\n", ((double) ((end - begin) / CLOCKS_PER_SEC)));
-    return 0;   
 }
 
-//gcc -static -g -o 8TileTest6.01 8TileTest6.01.c
-//valgrind -s --show-leak-kinds=all --leak-check=full --verbose ./8TileTest6.01
+void runNTimes(int n)
+{
+    int numIterations = n;
+    int i = 0;
+    double cumulativeTime = 0;
+    clock_t begin, end;
+    while (i++ < numIterations)
+    {
+      begin = clock();
+      breadthFirstSearch();
+      end = clock();
 
+      cumulativeTime += ((double) (end - begin)/ CLOCKS_PER_SEC);
+      //printf("iteration: %d\r", i);
+      //fflush(stdout);
+    }
+    printf("numIterations: %d tTotal: %f seconds tAverage: %3.3f ms\n", numIterations, cumulativeTime, cumulativeTime/numIterations * 1000);
+}
+int main(int argc, char* argv[])
+{ 
+    clock_t begin, end;
+    begin = clock();   
+    breadthFirstSearch();
+    end = clock();
+
+    printf("BFS took %f milliseconds\n", ((double) (end - begin)/CLOCKS_PER_SEC) * 1000);
+
+    //runNTimes(1000); // uncomment and run to yield accurate avg runtime
+  
+  
+  return 0;   
+}
 
 
 /* Rough structure:
