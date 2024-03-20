@@ -1,5 +1,5 @@
 # 8TileGame
-BFS implementation to solve the 8TileGame, roughly 185ms in worst case on my machine.
+BFS implementation to solve the 8TileGame, roughly 173ms in worst case on my machine.
 
 At the moment it uses a perfect hashing algorithm to detect already-explored states.
 The upsides of this approach are O(1) lookup time and the *guaranteed* absence of collisions.
