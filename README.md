@@ -6,8 +6,10 @@
               with adjacent tiles.
 
 **How fast is it**: The highest runtime occurs during a run where a solution doesn't exist, and this takes about 
-                173ms, measured in "TIMING_MODE" (configurable in constants.h) after 10,000 runs 
-                (TIMING_MODE_RUNS, also configurable in constants.h)
+                173ms. This was the average time measured in "TIMING_MODE" (toggled in constants.h) after 10,000 
+                runs. The number of runs (TIMING_MODE_RUNS) can be configured in constants.h. Note that enabling 
+                timing mode will run the code TIMING_MODE_RUNS number of times, and will suppress all output 
+                beyond the reported runtimes.
 
 
 **How does it keep track of states it's seen before?**
