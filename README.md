@@ -15,7 +15,7 @@ At the moment it uses a perfect hashing algorithm (see explored.c) to detect alr
 The upsides of this approach are O(1) lookup time and the *guaranteed* absence of collisions.
 However, the space complexity is O((x*y)!), where x, y = the #s of tiles along the x, y dimensions.
 
-This is prohibitive for any Tile Game implementation beyond a 3 x 3 board -- which I do eventually want to solve. 
+This is prohibitive for any Tile Game implementations beyond 3 x 3 boards -- which I would like to explore in the future.
 
 **Any plans to improve on this, or change it in the future?**
 At some point in the future I will implement a hash table to reduce the space complexity
