@@ -7,7 +7,7 @@ The tiles are arranged in a 3 x 3 grid, where one of the tiles is missing -- thi
 The goal is to reach the final arrangement from the initial arrangement by swapping the blank tile 
 with adjacent tiles.
               
-## How does Breadth First Search Work to find the fastest solution?
+## How does Breadth First Search work to find the fastest solution?
 BFS is a graph (nodes connected by edges) traversal algorithm which searches layer 
 by layer. One example is if used to search for oil, it would shave off a layer of earth one at a 
 time until the search was fruitful or it couldn't search anymore. It would then know that any oil 
