@@ -22,7 +22,7 @@ A* is similar to breadth first search, except it prioritizes where to look next 
 a heuristic, or hint. 
 
 ## How fast is this BFS implementation?
-The highest runtime occurs during a run where a solution doesn't exist, which requires searching through roughly
+The longest runtime occurs during a run where a solution doesn't exist, which requires searching through roughly
 485,000 (non-unique) states and takes roughly 173ms on my machine. This was the avg runtime measured in "TIMING_MODE" after TIMING_MODE_RUNS # of runs, 
 in this case 10,000 (both adjusted in constants.h). This puts the avg search rate of non-unique states at around 2,800,000 states per second. 
 
