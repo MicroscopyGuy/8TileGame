@@ -7,7 +7,8 @@ the blank tile with an adacent tile to transform some initial arrangement into a
 This code is a BFS (Breadth First Search) implementation which outputs the fewest swaps needed to complete the game, or
 reports that no solution was possible between the selected initial and final configurations.
 
-To visualize and play this game yourself, you can visit: https://sliding.toys/mystic-square/8-puzzle/. Note that I have no affiliation with this site. 
+To visualize and play this game yourself, you can visit: https://sliding.toys/mystic-square/8-puzzle/. Note that 
+I have no affiliation with this site. 
 
 ## How does Breadth First Search work to find the fastest solution?
 BFS is a graph (nodes connected by edges) traversal algorithm which searches layer 
@@ -30,13 +31,20 @@ in this case 10,000 (both adjusted in constants.h). This puts the avg search rat
 
 Note that timing mode suppresses all output beyond the reported runtimes.
               
-
 ## How does this code keep track of states it's seen before?
 At the moment it uses a perfect hashing algorithm (see explored.c) to detect already-explored states.
 The upsides of this approach are O(1) lookup time and the *guaranteed* absence of collisions.
 However, the hash algorithm runs in O((xy)^2) time, and the overall space complexity of this operation is O((x*y)!), where x, y = the #s of tiles along the x, y dimensions.
 
 This is prohibitive for any Tile Game implementation beyond 3 x 3 boards.
+
+## How can I use this code?
+This was developed using the GCC compiler, and is what I recommend for compilation.
+To simply run the code, ensure that TIMING_MODE is toggled to 0 in constants.h.
+You can select different initial and final arrangements by changing them manually in constants.c.
+
+Once you have an arrangement of tiles you would like to solve, simply compile this code with gcc and then run it!
+
 
 ## Any plans to improve on this, or change it in the future?
 At some point in the future I will implement a hash table to reduce the space complexity
