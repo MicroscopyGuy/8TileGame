@@ -40,7 +40,7 @@ This is prohibitive for any Tile Game implementation beyond 3 x 3 boards.
 
 ## How can I use this code?
 This was developed using the GCC compiler, and is what I recommend for compilation.
-To simply run the code, ensure that TIMING_MODE is toggled to 0 in constants.h.
+Before running the code, ensure that TIMING_MODE is toggled to 0 in constants.h.
 You can select different initial and final arrangements by changing them manually in constants.c.
 
 Once you have an arrangement of tiles you would like to solve, simply compile this code with gcc and then run it!
