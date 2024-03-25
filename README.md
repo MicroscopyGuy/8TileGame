@@ -18,7 +18,7 @@ Plenty of other algorithms for this exist, and have varying approaches. Depth fi
 less the opposite, and if used in the same example above, would repeatedly tunnel straight-down until it 
 found oil, or couldn't search anymore. This might be faster, but it would not guarantee the shallowest oil.
 
-A* is similar to breadth first search, except it prioritizes where to look next by the addition of 
+A*(pronounced Ay-Star) is similar to breadth first search, except it prioritizes where to look next by the addition of 
 a heuristic, or hint. 
 
 ## How fast is this BFS implementation?
