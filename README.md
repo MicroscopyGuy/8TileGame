@@ -1,24 +1,24 @@
 # 8TileGame
 
 ## What is this? 
-BFS implementation to solve the 8TileGame, outputs tile swaps needed to transform
+BFS (Breadth First Search) implementation to solve the 8TileGame, outputs tile swaps needed to transform
 an arbitrary (configurable) initial tile arrangement, into an equally arbitrary final arrangement.
 The tiles are arranged in a 3 x 3 grid, where one of the tiles is missing -- this is the blank tile.
 The goal is to reach the final arrangement from the initial arrangement by swapping the blank tile 
 with adjacent tiles.
               
 ## How does Breadth First Search Work to find the fastest solution?
- Breadth first search is a graph (nodes connected by edges) traversal algorithm which searches layer 
+BFS is a graph (nodes connected by edges) traversal algorithm which searches layer 
 by layer. One example is if used to search for oil, it would shave off a layer of earth one at a 
 time until the search was fruitful or it couldn't search anymore. It would then know that any oil 
 discovered was the closest to the surface within the search area.
 
 #### Other algorithms, for context:
-Plenty of other algorithms for this exist, and have varying approaches. Depth first search is more or 
+Plenty of other algorithms for this exist, and have varying approaches. DFS (Depth First Search) is more or 
 less the opposite, and if used in the same example above, would repeatedly tunnel straight-down until it 
 found oil, or couldn't search anymore. This might be faster, but it would not guarantee the shallowest oil.
 
-A*(pronounced Ay-Star) is similar to breadth first search, except it prioritizes where to look next by the addition of 
+A*(pronounced Ay-Star) is similar to BFS, except it prioritizes where to look next by the addition of 
 a heuristic, or hint. 
 
 ## How fast is this BFS implementation?
