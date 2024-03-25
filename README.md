@@ -23,7 +23,7 @@ a heuristic, or hint.
 
 ## How fast is this BFS implementation?**: 
 The highest runtime occurs during a run where a solution doesn't exist, which requires searching through roughly
-485,000 (non-unique) states and take roughly 173ms on my machine. This was the avg runtime measured in "TIMING_MODE" after TIMING_MODE_RUNS # of runs, 
+485,000 (non-unique) states and takes roughly 173ms on my machine. This was the avg runtime measured in "TIMING_MODE" after TIMING_MODE_RUNS # of runs, 
 in this case 10,000 (both adjusted in constants.h). This puts the avg search rate of non-unique states at around 2,800,000 states per second. 
 
 Note that timing mode suppresses all output beyond the reported runtimes.
@@ -34,7 +34,7 @@ At the moment it uses a perfect hashing algorithm (see explored.c) to detect alr
 The upsides of this approach are O(1) lookup time and the *guaranteed* absence of collisions.
 However, the hash algorithm runs in O((xy)^2) time, and the overall space complexity of this operation is O((x*y)!), where x, y = the #s of tiles along the x, y dimensions.
 
-This is prohibitive for any Tile Game implementation beyond 3 x 3 boards -- which I would like to explore in the future.
+This is prohibitive for any Tile Game implementation beyond 3 x 3 boards.
 
 ## Any plans to improve on this, or change it in the future?**
 At some point in the future I will implement a hash table to reduce the space complexity
